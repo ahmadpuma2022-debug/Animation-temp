@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>What if… couldn't stop</title>
+<style>
+  @font-face { font-family: "NR"; src: url("fonts/Newsreader.ttf"); font-weight: 200 800; }
+  @font-face { font-family: "NR"; src: url("fonts/Newsreader-Italic.ttf"); font-style: italic; font-weight: 200 800; }
+  @font-face { font-family: "IN"; src: url("fonts/Inter.ttf"); font-weight: 100 900; }
+  html, body { margin: 0; padding: 0; background: #000; overflow: hidden; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; }
+  canvas { display: block; width: 1920px; height: 1080px; }
+  #white { position: absolute; inset: 0; background: #f4f6f8; opacity: 0; pointer-events: none; }
+  #dark { position: absolute; inset: 0; background: #0b0a09; opacity: 0; pointer-events: none; }
+  #vig { position: absolute; inset: 0; pointer-events: none;
+         background: radial-gradient(ellipse at 50% 55%, rgba(0,0,0,0) 55%, rgba(0,0,0,.28) 100%); }
+  #scrim { position: absolute; inset: 0; pointer-events: none;
+         background: radial-gradient(ellipse 900px 520px at 300px 400px, rgba(10,20,40,.30), rgba(10,20,40,0) 70%),
+                     radial-gradient(ellipse 380px 240px at 1700px 330px, rgba(10,20,40,.22), rgba(10,20,40,0) 70%),
+                     linear-gradient(to top, rgba(10,20,40,.22), rgba(10,20,40,0) 22%); }
+  .ro { position: absolute; color: #fff; font-kerning: none; font-feature-settings: "kern" 0, "tnum" 1; text-shadow: 0 2px 18px rgba(0,0,0,.35), 0 1px 3px rgba(0,0,0,.25); }
+  #label { left: 108px; top: 268px; font: 600 31px "IN"; letter-spacing: 0.2em; }
+  #num   { left: 100px; top: 318px; font: 500 176px/1.05 "NR"; letter-spacing: -0.01em; font-variation-settings: "opsz" 72; }
+  #sub   { left: 108px; top: 528px; font: 600 27px "IN"; letter-spacing: 0.2em; opacity: .92; }
+  #line  { left: 108px; top: 905px; font: italic 400 58px "NR"; font-variation-settings: "opsz" 36; transition: none; }
+  #tlab  { right: 108px; top: 268px; font: 600 25px "IN"; letter-spacing: 0.2em; text-align: right; opacity: .9; }
+  #tnum  { right: 104px; top: 304px; font: 500 84px/1.05 "NR"; text-align: right; font-variation-settings: "opsz" 72; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "./node_modules/three/build/three.module.js",
+               "three/addons/": "./node_modules/three/examples/jsm/" } }
+</script>
+</head>
+<body>
+<div id="stage">
+  <canvas id="c"></canvas>
+  <canvas id="acc" style="position:absolute;left:0;top:0;display:none"></canvas>
+  <div id="white"></div>
+  <div id="dark"></div>
+  <div id="vig"></div>
+  <div id="scrim"></div>
+  <div class="ro" id="label">YOUR ALTITUDE</div>
+  <div class="ro" id="num">0.0 m</div>
+  <div class="ro" id="sub">AND STILL RISING</div>
+  <div class="ro" id="tlab">OUTSIDE AIR</div>
+  <div class="ro" id="tnum">15 °C</div>
+  <div class="ro" id="line"></div>
+</div>
+<script type="module">
+  const ep = new URLSearchParams(location.search).get("ep") || "float-up";
+  import(`./episodes/${ep}/scene.js`).catch((e) => { document.body.dataset.error = e.message; console.error(e); });
+</script>
+</body>
+</html>

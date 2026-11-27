@@ -1,0 +1,16 @@
+{
+  "name": "what-if-3d",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Make 'What if you ___ and couldn't stop?' 3D videos entirely from code with Claude Code (three.js), no AI video generator.",
+  "scripts": {
+    "render": "node scripts/render.mjs",
+    "stills": "node scripts/render.mjs"
+  },
+  "dependencies": {
+    "ffmpeg-static": "5.2.0",
+    "puppeteer": "23.11.1",
+    "three": "0.170.0"
+  }
+}
