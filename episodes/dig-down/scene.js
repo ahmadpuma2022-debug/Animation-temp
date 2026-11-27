@@ -23,10 +23,11 @@ const Dc = monotone(T.concat([482]), DV.concat([-20]));
 const T_CENTER = 305, T_SWAP = 306;
 const R_KEYS = [[0, 3], [20, 4], [45, 6], [110, 10], [135, 24], [290, 24], [305, 30], [318, 46], [345, 46], [360, 14], [385, 9], [420, 9], [445, 9], [455, 2.6], [478, 2.6], [492, 9], [530, 10], [600, 12], [1275, 12]];
 const Rof = (D) => keyed(R_KEYS, D);
-const COLS = [[0, '#5a4030'], [8, '#6b4e37'], [45, '#8a6a4c'], [180, '#7e766e'], [320, '#8d8378'], [450, '#6e6a70'], [525, '#7a5242'], [600, '#9b3f26'], [770, '#bd4d1a'],
+const COLS = [[0, '#5a4030'], [8, '#6b4e37'], [45, '#8a6a4c'], [180, '#9a9086'], [320, '#a69c90'], [450, '#6e6a70'], [525, '#7a5242'], [600, '#9b3f26'], [770, '#bd4d1a'],
   [900, '#dc6a1a'], [955, '#ef8f2e'], [975, '#ffd27a'], [1055, '#ffd9a0'], [1160, '#ffe2b0'], [1275, '#ffe8c0']].map(([d, c]) => [d, new THREE.Color(c)]);
 function colorAt(D) { for (let i = 0; i < COLS.length - 1; i++) if (D <= COLS[i + 1][0]) return COLS[i][1].clone().lerp(COLS[i + 1][1], clamp((D - COLS[i][0]) / (COLS[i + 1][0] - COLS[i][0]), 0, 1)); return COLS[COLS.length - 1][1].clone(); }
-const PITCH = [[0, -36], [2.2, -56], [3.6, -78], [305, -78], [335, 72], [425, 72], [450, 60], [465, 28], [482, 14]];
+const WOW = [75, 90, 108, 126, 144, 162];
+const PITCH = [[0, -36], [2.2, -56], [3.6, -78]].concat(WOW.flatMap((w) => [[w - 6, -78], [w - 1.5, -52], [w + 3, -52], [w + 8, -78]])).concat([[305, -78], [335, 72], [425, 72], [450, 60], [465, 28], [482, 14]]);
 const YAW = [[0, 0], [305, 18], [335, 28], [482, 40]];
 
 const LINES = [];
@@ -62,7 +63,9 @@ function buildShaft(seed, d0, d1) {
     const D = d0 + (len / 2 - p.getY(i)) / K, n = hash2((ix % seg) + seed, iy + seed * 3) - 0.5, n2 = hash2(iy * 0.31 + seed, 7);
     const r = Rof(D) * (1 + n * 0.34 * (D > 440 ? 0.6 : 1));
     p.setXYZ(i, Math.cos(ang) * r, p.getY(i), Math.sin(ang) * r);
-    colorAt(D).multiplyScalar((0.7 + 0.4 * n2 + 0.2 * n) * (1 + 0.28 * Math.sin(D * K / 7.0 + seed) * (D < 1000 ? 1 : 0.3))).toArray(col, i * 3);
+    const cc = colorAt(D).multiplyScalar((0.7 + 0.4 * n2 + 0.2 * n) * (1 + 0.3 * Math.sin(D * K / 7.0 + seed) * (D < 1000 ? 1 : 0.3)));
+    if (hash2((ix % seg) * 1.7 + seed, iy * 0.5 + 3) > 0.93 && D > 30) cc.lerp(new THREE.Color(D > 525 ? '#ffc864' : '#f0e6d2'), 0.7).multiplyScalar(1.5);
+    cc.toArray(col, i * 3);
   }
   g.setAttribute('color', new THREE.BufferAttribute(col, 3));
   const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.95, side: THREE.DoubleSide }));
@@ -78,7 +81,7 @@ const glow = (color) => new THREE.MeshBasicMaterial({ color });
 
 // 1:15 Statue of Liberty (93 m: base to torch), hanging upside down
 {
-  const o = at(nearSet, 150, -8, 0), s = new THREE.Group(); o.add(s); s.rotation.x = Math.PI;
+  const o = at(nearSet, 150, -4, -14), s = new THREE.Group(); o.add(s); s.rotation.x = Math.PI;
   const stone = '#b9b2a2', green = '#6fa89a';
   mesh(new THREE.BoxGeometry(14, 42, 14), stone, s, 0, 21 - 46.5, 0);            // pedestal
   mesh(new THREE.ConeGeometry(7, 26, 8), green, s, 0, 42 + 13 - 46.5, 0);          // robe
@@ -89,8 +92,8 @@ const glow = (color) => new THREE.MeshBasicMaterial({ color });
 }
 // 1:30 Eiffel Tower, tip first; 1:48 Burj Khalifa, spire first
 {
-  const E = buildEiffel(0, 0); scene.remove(E); const o = at(nearSet, 205, -10, 4); const w = new THREE.Group(); o.add(w); w.add(E); E.position.set(0, 0, 0); w.rotation.x = Math.PI; w.scale.setScalar(0.3); w.position.y = 0; w.children[0].position.y = -165;
-  const B = buildBurj(0, 0); scene.remove(B); const o2 = at(nearSet, 265, 9, -3); const w2 = new THREE.Group(); o2.add(w2); w2.add(B); w2.rotation.x = Math.PI; w2.scale.setScalar(0.11); B.position.y = -414;
+  const E = buildEiffel(0, 0); scene.remove(E); const o = at(nearSet, 205, 5, -14); const w = new THREE.Group(); o.add(w); w.add(E); E.position.set(0, 0, 0); w.rotation.x = Math.PI; w.scale.setScalar(0.3); w.position.y = 0; w.children[0].position.y = -165;
+  const B = buildBurj(0, 0); scene.remove(B); const o2 = at(nearSet, 265, -4, -14); const w2 = new THREE.Group(); o2.add(w2); w2.add(B); w2.rotation.x = Math.PI; w2.scale.setScalar(0.11); B.position.y = -414;
   for (const t of [E, B]) t.traverse((m) => { if (m.isMesh) { m.castShadow = false; } });
 }
 // 2:06 deepest cave: stalactites and stalagmites in a huge cavern
@@ -101,7 +104,7 @@ const glow = (color) => new THREE.MeshBasicMaterial({ color });
 }
 // 2:24 the lift cage of a gold mine
 {
-  const o = at(nearSet, 395, 3.5, 0);
+  const o = at(nearSet, 395, 3, -3);
   const cage = new THREE.Group(); o.add(cage);
   mesh(new THREE.BoxGeometry(3.2, 0.25, 3.2), '#4d555c', cage, 0, -2, 0); mesh(new THREE.BoxGeometry(3.2, 0.25, 3.2), '#4d555c', cage, 0, 2, 0);
   for (const [x, z] of [[-1.5, -1.5], [1.5, -1.5], [-1.5, 1.5], [1.5, 1.5]]) mesh(new THREE.BoxGeometry(0.18, 4, 0.18), '#c9a227', cage, x, 0, z);
@@ -136,20 +139,25 @@ const IRON = [];
   }
 }
 nearSet.traverse((m) => { if (m.isMesh && m.material.isMeshStandardMaterial && m.material.emissive.getHex() === 0) { m.material = m.material.clone(); m.material.emissive.copy(m.material.color).multiplyScalar(0.42); } });
-const OCEAN = new THREE.Mesh(new THREE.CircleGeometry(60000, 48), new THREE.MeshStandardMaterial({ color: '#1f6f9f', roughness: 0.35, metalness: 0.05, side: THREE.DoubleSide, transparent: true, opacity: 0.92 }));
+const OCEAN = new THREE.Mesh(new THREE.CircleGeometry(60000, 48), new THREE.MeshStandardMaterial({ color: '#1f6f9f', emissive: '#2c78a8', emissiveIntensity: 0.7, roughness: 0.35, metalness: 0.05, side: THREE.DoubleSide, transparent: true, opacity: 0.92 }));
 OCEAN.rotation.x = -Math.PI / 2; OCEAN.visible = false; scene.add(OCEAN);
 
 const NR = 260, ROCKS = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1, 0), new THREE.MeshStandardMaterial({ color: '#5e564e', flatShading: true, roughness: 0.9 }), NR);
 ROCKS.frustumCulled = false; scene.add(ROCKS);
 const RK = Array.from({ length: NR }, () => ({ a: rnd() * 6.283, r: 0.25 + rnd() * 0.6, y: rnd(), s: 0.06 + rnd() * rnd() * 0.4 }));
 const _o = new THREE.Object3D();
+const gcv = document.createElement('canvas'); gcv.width = gcv.height = 128; { const gx = gcv.getContext('2d'), gr = gx.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.3, 'rgba(255,255,255,.5)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); gx.fillStyle = gr; gx.fillRect(0, 0, 128, 128); }
+const GLOW = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(gcv), color: '#ffb060', blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false, fog: false, transparent: true, opacity: 0 }));
+GLOW.renderOrder = 999; scene.add(GLOW);
 const fogBase = new THREE.Fog('#050404', 8, 150); scene.fog = fogBase;
 const lamp2 = new THREE.PointLight('#cfd8ff', 30, 0, 1.4); scene.add(lamp2);
 const { poseHands, drawHands } = await buildHands();
 const $ = (id) => document.getElementById(id);
 // ---------- anticipation layer: journey gauge, "next" tag, chapter titles ----------
 const css = document.createElement('style');
-css.textContent = `#gauge{position:absolute;right:62px;top:430px;width:3px;height:410px;background:rgba(255,255,255,.25);border-radius:2px}
+css.textContent = `.ro{text-shadow:0 2px 22px rgba(0,0,0,.55),0 1px 4px rgba(0,0,0,.5) !important}#line{text-shadow:0 2px 20px rgba(0,0,0,.75),0 1px 5px rgba(0,0,0,.65) !important}
+#c,#acc{filter:contrast(1.12) saturate(1.2) brightness(1.04)}
+#gauge{position:absolute;right:62px;top:430px;width:3px;height:410px;background:rgba(255,255,255,.25);border-radius:2px}
 #gfill{position:absolute;right:62px;top:430px;width:3px;height:0;background:#fff;border-radius:2px}
 #gdot{position:absolute;right:56px;width:15px;height:15px;border-radius:50%;background:#fff;box-shadow:0 0 16px 4px rgba(255,255,255,.65)}
 .gt{position:absolute;right:92px;font:600 16px "IN";letter-spacing:.2em;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.7);white-space:nowrap}
@@ -223,14 +231,14 @@ function frame(f) {
   const heat = clamp(Math.log10(Math.max(tempF(t), 10)) / 3.9, 0, 1);       // 0 cold .. 1 white-hot
   const warm = new THREE.Color().setHSL(lerp(0.08, 0.12, heat), lerp(0.2, 0.9, smooth(0.3, 0.75, heat)), lerp(0.82, 0.78, heat));
   let fogC = new THREE.Color().setHSL(lerp(0.07, 0.07, heat), 0.7, lerp(0.05, 0.3, smooth(0.5, 0.95, heat)));
-  let fogFar = lerp(220, 420, smooth(0.5, 0.95, heat)), I = lerp(95, 55, heat);
-  let hm = lerp(0.6, 0.55, smooth(0.45, 0.95, heat));
+  let fogFar = lerp(220, 420, smooth(0.5, 0.95, heat)), I = lerp(135, 70, heat);
+  let hm = lerp(0.85, 0.6, smooth(0.45, 0.95, heat));
   if (t < 3) { fogC = new THREE.Color('#050404'); }
   if (out && D < 110) {                                   // water
     const w = smooth(110, 92, D);
-    fogC.lerp(new THREE.Color('#0a3d63'), w); fogFar = lerp(fogFar, lerp(90, 220, smooth(90, 3, D)), w);
-    warm.lerp(new THREE.Color('#a6dcff'), w); hm = lerp(hm, lerp(0.7, 1.5, smooth(90, 0, D)), w); I = lerp(I, 8, w);
-    fogC.lerp(new THREE.Color('#2f87b8'), smooth(35, 0, D) * w);
+    fogC.lerp(new THREE.Color('#1c78ad'), w); fogFar = lerp(fogFar, lerp(90, 220, smooth(90, 3, D)), w);
+    warm.lerp(new THREE.Color('#a6dcff'), w); hm = lerp(hm, lerp(0.7, 1.5, smooth(90, 0, D)), w); I = lerp(I, 45, w);
+    fogC.lerp(new THREE.Color('#4aa6d8'), smooth(35, 0, D) * w);
   }
   if (out && D <= 3) { const u = smooth(3, -4, D); fogC.lerp(new THREE.Color('#b9bdd8'), u); fogFar = lerp(fogFar, 9000, u); }
   fogBase.color.copy(fogC); scene.background = fogC.clone(); fogBase.near = 6; fogBase.far = fogFar;
@@ -241,8 +249,11 @@ function frame(f) {
   OCEAN.position.set(camera.position.x, 0, camera.position.z);
   sky.position.copy(camera.position); skyMat.uniforms.alt.value = 0;
 
+  { const dirY = out ? 1 : -1, show = t > 2.4 && !(out && D < 60);
+    GLOW.visible = show; GLOW.position.set(camera.position.x, eye + dirY * 140, camera.position.z); GLOW.scale.setScalar(120 + 260 * heat);
+    GLOW.material.color.copy(warm).lerp(new THREE.Color('#ff8a2a'), 0.35); GLOW.material.opacity = lerp(0.16, 0.85, smooth(0.35, 0.95, heat)) * smooth(2.4, 4, t) * (1 - smooth(60, 30, D) * (out ? 1 : 0)); }
   // rocks fixed in the shaft: they rush past you, which is what shows the speed
-  { const H = 160, Dold = D; ROCKS.visible = !inRoom && !(out && D < 3);
+  { const H = 160, Dold = D; ROCKS.visible = !inRoom && !(out && D < 112);
     for (let i = 0; i < NR; i++) { const k = RK[i]; const yy = ((k.y * H - eye) % H + H) % H - H / 2 + eye; const R = Rof(clamp(Dold, 0, 1275)) * k.r;
       _o.position.set(Math.cos(k.a) * R, yy, Math.sin(k.a) * R); _o.rotation.set(k.a * 3, k.y * 9, 0); _o.scale.setScalar(k.s * (0.5 + R / 20)); _o.updateMatrix(); ROCKS.setMatrixAt(i, _o.matrix); }
     ROCKS.instanceMatrix.needsUpdate = true; }
