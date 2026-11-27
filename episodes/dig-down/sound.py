@@ -15,10 +15,10 @@ k = Kit(DUR); t = k.t
 # camera speed along the shaft (units/s) from the same stage keys the picture uses (piecewise smooth)
 tk = np.array(T + [482.0]); dk = np.array(DV + [-70.0], dtype=float)
 D = np.interp(t, tk, dk); D = np.convolve(D, np.ones(2001) / 2001, mode='same')
-spd = np.abs(np.gradient(D, t)); spd = np.clip(spd / 25.0, 0, 1).astype(np.float32)
+spd = np.abs(np.gradient(D, t)) * 4.0; spd = np.clip(spd / 70.0, 0, 1).astype(np.float32)
 
-depth = np.clip(np.abs(D) / 1540.0, 0, 1).astype(np.float32)
-in_room = 1 - sm(3.5, 5.5, t)
+depth = np.clip(np.abs(D) / 1275.0, 0, 1).astype(np.float32)
+in_room = 1 - sm(1.5, 2.6, t)
 water = sm(395, 410, t) * (1 - sm(447, 452, t))
 air = sm(447, 455, t)
 
@@ -30,7 +30,7 @@ roomhum = k.band(k.noise(), 60, 300) * 0.03 * in_room
 wat = k.band(k.noise(), 80, 900) * 0.07 * water * k.lfo(0.3, 0.4, 5)
 wind = k.band(k.noise(), 300, 4000) * 0.06 * air * (1 - sm(470, 482, t) * 0.5)
 
-fx = k.thump(4.3, 50, 0.25)
+fx = k.thump(0.2, 45, 0.3) + k.whoosh(1.0, 2.2, 0.2, 100, 2500)
 for ti in (75, 90, 108, 126, 144, 162, 225, 285, 425):           # wow objects: a soft pass
     fx = fx + k.whoosh(ti - 2.5, 3.5, 0.09, 150, 1800)
 fx = fx + k.thump(305, 38, 0.35) + k.thump(306.2, 46, 0.22)         # the centre
