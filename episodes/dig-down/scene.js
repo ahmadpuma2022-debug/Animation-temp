@@ -135,6 +135,7 @@ const IRON = [];
     for (let j = 0; j < 5; j++) mesh(new THREE.SphereGeometry(1.6 + j * 0.7, 6, 5), '#3a3a40', sea, x + j * 0.4, h + 3 + j * 3.4, z, { transparent: true, opacity: 0.35 });
   }
 }
+nearSet.traverse((m) => { if (m.isMesh && m.material.isMeshStandardMaterial && m.material.emissive.getHex() === 0) { m.material = m.material.clone(); m.material.emissive.copy(m.material.color).multiplyScalar(0.42); } });
 const OCEAN = new THREE.Mesh(new THREE.CircleGeometry(60000, 48), new THREE.MeshStandardMaterial({ color: '#1f6f9f', roughness: 0.35, metalness: 0.05, side: THREE.DoubleSide, transparent: true, opacity: 0.92 }));
 OCEAN.rotation.x = -Math.PI / 2; OCEAN.visible = false; scene.add(OCEAN);
 
@@ -146,6 +147,46 @@ const fogBase = new THREE.Fog('#050404', 8, 150); scene.fog = fogBase;
 const lamp2 = new THREE.PointLight('#cfd8ff', 30, 0, 1.4); scene.add(lamp2);
 const { poseHands, drawHands } = await buildHands();
 const $ = (id) => document.getElementById(id);
+// ---------- anticipation layer: journey gauge, "next" tag, chapter titles ----------
+const css = document.createElement('style');
+css.textContent = `#gauge{position:absolute;right:62px;top:430px;width:3px;height:410px;background:rgba(255,255,255,.25);border-radius:2px}
+#gfill{position:absolute;right:62px;top:430px;width:3px;height:0;background:#fff;border-radius:2px}
+#gdot{position:absolute;right:56px;width:15px;height:15px;border-radius:50%;background:#fff;box-shadow:0 0 16px 4px rgba(255,255,255,.65)}
+.gt{position:absolute;right:92px;font:600 16px "IN";letter-spacing:.2em;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.7);white-space:nowrap}
+.gk{position:absolute;right:58px;width:11px;height:2px;background:#fff}
+#next{position:absolute;right:108px;top:872px;font:600 23px "IN";letter-spacing:.2em;color:#fff;text-align:right;white-space:nowrap;text-shadow:0 2px 12px rgba(0,0,0,.75);opacity:0}
+#next b{font-weight:800;opacity:.85}
+#chap{position:absolute;left:0;right:0;top:640px;text-align:center;font:500 78px "NR";letter-spacing:.28em;color:#fff;opacity:0;text-shadow:0 2px 26px rgba(0,0,0,.6);white-space:nowrap}
+#chap small{display:block;font:600 24px "IN";letter-spacing:.3em;margin-top:6px;opacity:.85}`;
+document.head.appendChild(css);
+const mk = (id, parent = $('stage')) => { const e = document.createElement('div'); e.id = id; parent.appendChild(e); return e; };
+const GH = 410, GTOP = 430, GN = 26;
+mk('gauge'); const gfill = mk('gfill'), gdot = mk('gdot'), nextEl = mk('next'), chapEl = mk('chap');
+const GTICKS = [['SURFACE', 0], ['MANTLE', 11], ['CORE', 16], ['CENTRE', 19], ['FAR SIDE', 22]];
+const gtEls = GTICKS.map(([name, i]) => { const y = GTOP + (i / GN) * GH; const k = document.createElement('div'); k.className = 'gk'; k.style.top = y + 'px'; $('stage').appendChild(k);
+  const e = document.createElement('div'); e.className = 'gt'; e.textContent = name; e.style.top = (y - 10) + 'px'; $('stage').appendChild(e); return [i, e, k]; });
+// what is coming next (stage index it belongs to, shown as "NEXT" for 10 s before and "NOW" for 5 s after)
+const MILE = [[5, 'STATUE OF LIBERTY · 93 m'], [6, 'EIFFEL TOWER · 330 m'], [7, 'BURJ KHALIFA · 828 m'], [8, 'THE DEEPEST CAVE · 2,212 m'], [9, 'THE DEEPEST MINE · 3.9 km'],
+  [10, 'THE DEEPEST HOLE EVER DRILLED · 12.3 km'], [11, 'THE BOTTOM OF THE CRUST · 35 km'], [12, 'DIAMONDS · 150 km'], [14, 'A SUNKEN OCEAN FLOOR · 660 km'], [16, 'THE EARTH’S CORE · 2,891 km'],
+  [17, 'LIQUID IRON · 4,000 km'], [18, 'THE INNER CORE · 5,150 km'], [19, 'THE CENTRE OF THE EARTH · 6,371 km'], [22, 'THE FAR SIDE’S CRUST · 12,731 km'], [23, 'THE SEABED · 12,738 km'], [25, 'THE FAR SIDE OF THE WORLD · 12,742 km']];
+const TEASE = [[3.8, 11, 'DESTINATION', 'THE OTHER SIDE OF THE EARTH · 12,742 km'], [38, 46, 'COMING UP', 'THE TALLEST BUILDINGS, UPSIDE DOWN'], [168, 176, 'COMING UP', 'DIAMONDS · THEN THE HEAT OF THE MANTLE'],
+  [232, 240, 'COMING UP', 'A SEA OF LIQUID IRON'], [286, 295, 'ALMOST THERE', 'THE EXACT CENTRE OF THE EARTH'], [331, 340, 'NOW', 'THE OTHER HALF OF THE JOURNEY'], [430, 441, 'LAST STRETCH', 'LIGHT · AIR · THE OTHER SIDE OF THE WORLD']];
+const CHAPS = [[2.5, 6.2, 'THE CRUST', 'Earth’s thin outer skin'], [180, 184.5, 'THE MANTLE', 'Hot rock that flows'], [255, 259.5, 'THE OUTER CORE', 'A sea of liquid iron'], [285, 289.5, 'THE INNER CORE', 'Solid iron, hot as the Sun’s surface'],
+  [305, 310, 'THE CENTRE', 'Where gravity is zero'], [380, 384.5, 'THE FAR SIDE', 'Crust under an ocean'], [405, 409.5, 'THE OCEAN', 'Water from the bottom up'], [450, 454.5, 'THE SURFACE', 'The other side of the world']];
+function extras(t) {
+  let si = 0; for (let i = 0; i < T.length - 1; i++) if (t >= T[i]) si = i + (t - T[i]) / (T[i + 1] - T[i]); if (t >= T[T.length - 1]) si = T.length - 1 + (t - T[T.length - 1]) / 17;
+  const g = clamp(si / GN, 0, 1), vis = smooth(1.5, 3.2, t);
+  gfill.style.height = (g * GH) + 'px'; gfill.style.opacity = vis; $('gauge').style.opacity = vis; gdot.style.top = (GTOP + g * GH - 7) + 'px'; gdot.style.opacity = vis;
+  for (const [i, e, k] of gtEls) { const o = (si >= i - 0.01 ? 1 : 0.5) * vis; e.style.opacity = o; k.style.opacity = o; }
+  let txt = '', op = 0;
+  for (const [a, b, lab, tx] of TEASE) if (t >= a && t < b) { txt = '<b>' + lab + '</b> · ' + tx; op = Math.min(smooth(a, a + 0.6, t), 1 - smooth(b - 0.6, b, t)); }
+  for (const [i, tx] of MILE) { const arr = T[i], a = arr - 10, b = arr + 5;
+    if (t >= a && t < b) { const now = t >= arr - 1; txt = '<b>' + (now ? 'NOW' : 'NEXT') + '</b> · ' + tx; op = Math.min(smooth(a, a + 0.6, t), 1 - smooth(b - 0.6, b, t)); } }
+  nextEl.innerHTML = txt; nextEl.style.opacity = op * vis;
+  let ct = '', co = 0;
+  for (const [a, b, h, sub] of CHAPS) if (t >= a && t < b) { ct = h + '<small>' + sub.toUpperCase() + '</small>'; co = Math.min(smooth(a, a + 0.7, t), 1 - smooth(b - 0.9, b, t)); }
+  chapEl.innerHTML = ct; chapEl.style.opacity = co;
+}
 $('label').textContent = 'DISTANCE FROM YOUR ROOM'; $('sub').textContent = 'AND STILL DIGGING';
 
 const fmtNum = (a) => a < 10 ? a.toFixed(1) + ' m' : a < 15000 ? Math.round(a).toLocaleString('en-US') + ' m'
@@ -210,6 +251,8 @@ function frame(f) {
   for (const [m, ph, sp] of IRON) { const y = ((ph + t * sp) % 80) - 40; m.position.y = y; }
   if (t < 80) hole.rotation.z = 0;
 
+  extras(t);
+  $('dark').style.opacity = smooth(479.6, 481.8, t);
   poseHands(t, 0.3);
   const labelWater = t >= 395;
   overlay(t, ad, LINES, {

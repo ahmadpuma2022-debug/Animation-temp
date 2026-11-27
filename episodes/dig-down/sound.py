@@ -31,8 +31,11 @@ wat = k.band(k.noise(), 80, 900) * 0.07 * water * k.lfo(0.3, 0.4, 5)
 wind = k.band(k.noise(), 300, 4000) * 0.06 * air * (1 - sm(470, 482, t) * 0.5)
 
 fx = k.thump(0.2, 45, 0.3) + k.whoosh(1.0, 2.2, 0.2, 100, 2500)
-for ti in (75, 90, 108, 126, 144, 162, 225, 285, 425):           # wow objects: a soft pass
-    fx = fx + k.whoosh(ti - 2.5, 3.5, 0.09, 150, 1800)
+for i in (5, 6, 7, 8, 9, 10, 12, 14, 16, 17, 18, 19, 22, 23, 25):  # each landmark: a rising whoosh, a hit, a soft bell
+    ti = T[i]
+    fx = fx + k.whoosh(ti - 2.6, 2.8, 0.11, 150, 2200) + k.thump(ti, 58, 0.18) + k.bell(ti + 0.05, g=0.022)
+for b in np.arange(248.0, 304.5, 1.0):                                # a heartbeat that grows toward the centre
+    fx = fx + k.thump(float(b), 44, 0.06 + 0.2 * (b - 248) / 56)
 fx = fx + k.thump(305, 38, 0.35) + k.thump(306.2, 46, 0.22)         # the centre
 fx = fx + k.whoosh(448, 3.0, 0.16, 300, 4000)                       # out of the water
 for b in (452.0, 458.0, 466.0):
